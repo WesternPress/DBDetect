@@ -40,33 +40,43 @@ A step-by-step walkthrough with runnable examples is in
 ## Repository layout
 
 ```
-config/
-  base.yaml                 shared settings (data, epochs, evaluation, paths)
-  recipes/finetune.yaml     unified fine-tuning recipe shared by all baselines
-  unified/                  baselines and RETFound with the unified recipe
-  baselines/                each baseline with its paper's original recipe
-  pfm/                      RETFound: official recipe, linear / MLP probe, LoRA, last-4-blocks, LP-FT
-src/
-  preprocess/dataset.py     npz loading (BGR -> RGB), data loaders, GPU augmentation, cross-fitting hold-out
-  model/train_baseline.py   end-to-end training (deterministic, resumable, --save-features)
-  model/baselines.py        model builder, optimizers (incl. layer-wise lr decay), learning-rate schedules
-  model/pfm.py              RETFound loading, LoRA, trainable-parameter selection
-  model/extract_features.py, train_linear_probe.py   frozen RETFound features + linear / MLP heads
-  model/run_features.py     penultimate features of a trained run
-  model/fusion_head.py      feature-level fusion heads (logistic / MLP, optional other eye)
-  api/evaluate.py           metrics, Youden threshold, patient-level bootstrap CIs
-  api/fuse.py               probability-level fusion (models / other eye / seed ensembles)
-  api/stats.py              paired patient-level bootstrap
-  api/summarize.py          all result tables -> results/
-scripts/
-  dispatch.py               multi-GPU job queue (memory-aware packing, resumable)
-  make_queue.py             queue of every training run behind the results
-  fusion_all.sh             every fusion experiment, then the tables
-splits/train_5fold.csv      patient-grouped, label-stratified folds for cross-fitting
-results/                    summary.md and CSV tables (generated)
-docs/                       method_and_results.md, future_work.md
-notebooks/                  DBDetect_pipeline.ipynb
-environment.yml             conda environment
+DBDetect/
+├── config/
+│   ├── base.yaml                  # shared settings: data, epochs, evaluation, paths
+│   ├── recipes/finetune.yaml      # unified fine-tuning recipe shared by all baselines
+│   ├── unified/                   # baselines and RETFound with the unified recipe
+│   ├── baselines/                 # each baseline with its paper's original recipe
+│   └── pfm/                       # RETFound: official recipe, probes, LoRA, last 4 blocks, LP-FT
+├── src/
+│   ├── preprocess/
+│   │   └── dataset.py             # npz loading (BGR -> RGB), loaders, GPU augmentation, folds
+│   ├── model/
+│   │   ├── train_baseline.py      # end-to-end training (deterministic, resumable)
+│   │   ├── baselines.py           # model builder, optimizers, learning-rate schedules
+│   │   ├── pfm.py                 # RETFound loading, LoRA, trainable-parameter selection
+│   │   ├── extract_features.py    # frozen RETFound features
+│   │   ├── train_linear_probe.py  # linear / MLP heads on frozen features
+│   │   ├── run_features.py        # penultimate features of a trained run
+│   │   └── fusion_head.py         # feature-level fusion heads (logistic / MLP, other eye)
+│   └── api/
+│       ├── evaluate.py            # metrics, Youden threshold, patient-level bootstrap CIs
+│       ├── fuse.py                # probability-level fusion (models / other eye / seeds)
+│       ├── stats.py               # paired patient-level bootstrap
+│       └── summarize.py           # all result tables -> results/
+├── scripts/
+│   ├── dispatch.py                # multi-GPU job queue (memory-aware packing, resumable)
+│   ├── make_queue.py              # queue of every training run behind the results
+│   └── fusion_all.sh              # every fusion experiment, then the tables
+├── splits/
+│   └── train_5fold.csv            # patient-grouped, label-stratified folds for cross-fitting
+├── results/                       # summary.md and CSV tables (generated)
+├── docs/
+│   ├── method_and_results.md      # task, protocol, baselines, method, results, ablations
+│   └── future_work.md             # open directions
+├── notebooks/
+│   └── DBDetect_pipeline.ipynb    # step-by-step walkthrough with runnable examples
+├── environment.yml                # conda environment
+└── LICENSE
 ```
 
 ## Setup
