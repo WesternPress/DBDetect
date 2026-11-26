@@ -157,12 +157,40 @@ The LP-FT runs (queue group `adapt`) start from the linear-probe heads of step 2
 - Seeds 0, 1 and 50; mean ± SD.
 - Comparisons: paired bootstrap over patients (2,000 resamples, both eyes of a patient together).
 
-## Acknowledgements
+## References
 
-- RETFound: Zhou et al., *A foundation model for generalizable disease detection from retinal images*, Nature 2023
-  ([code](https://github.com/rmaphoh/RETFound)).
-- ODIR-5K: Peking University, Ocular Disease Intelligent Recognition challenge (2019).
-- Models and ImageNet weights: [timm](https://github.com/huggingface/pytorch-image-models) and torchvision.
+**Baselines**
+
+1. **ResNet-50**: K. He, X. Zhang, S. Ren, J. Sun. *Deep Residual Learning for Image Recognition*. CVPR 2016.
+   [arXiv:1512.03385](https://arxiv.org/abs/1512.03385). Weights: torchvision `IMAGENET1K_V2` (timm `resnet50.tv2_in1k`).
+2. **DenseNet-121**: G. Huang, Z. Liu, L. van der Maaten, K. Q. Weinberger. *Densely Connected Convolutional Networks*.
+   CVPR 2017. [arXiv:1608.06993](https://arxiv.org/abs/1608.06993). Weights: torchvision `IMAGENET1K_V1`
+   (timm `densenet121.tv_in1k`).
+3. **ViT-B/16**: A. Dosovitskiy et al. *An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale*.
+   ICLR 2021. [arXiv:2010.11929](https://arxiv.org/abs/2010.11929). Weights: timm
+   `vit_base_patch16_224.augreg2_in21k_ft_in1k`, ImageNet-21k pre-training from A. Steiner et al., *How to Train Your
+   ViT? Data, Augmentation, and Regularization in Vision Transformers*, TMLR 2022
+   ([arXiv:2106.10270](https://arxiv.org/abs/2106.10270)).
+
+**Foundation model**
+
+4. **RETFound**: Y. Zhou et al. *A foundation model for generalizable disease detection from retinal images*. Nature
+   622, 156–163 (2023). [Code](https://github.com/rmaphoh/RETFound); weights
+   [`YukunZhou/RETFound_mae_natureCFP`](https://huggingface.co/YukunZhou/RETFound_mae_natureCFP).
+
+**Adaptation methods (RETFound ablations)**
+
+5. **LoRA**: E. J. Hu et al. *LoRA: Low-Rank Adaptation of Large Language Models*. ICLR 2022.
+   [arXiv:2106.09685](https://arxiv.org/abs/2106.09685).
+6. **LP-FT**: A. Kumar, A. Raghunathan, R. Jones, T. Ma, P. Liang. *Fine-Tuning can Distort Pretrained Features and
+   Underperform Out-of-Distribution*. ICLR 2022. [arXiv:2202.10054](https://arxiv.org/abs/2202.10054).
+
+**Data and software**
+
+7. **ODIR-5K**: Peking University, Ocular Disease Intelligent Recognition challenge (ODIR-2019); this project uses the
+   CSCE566 course release.
+8. **timm**: R. Wightman, *PyTorch Image Models*, <https://github.com/huggingface/pytorch-image-models>.
+9. **torchvision**: <https://github.com/pytorch/vision>.
 
 ## License
 
