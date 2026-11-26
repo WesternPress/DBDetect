@@ -1,2 +1,156 @@
-# DBDetect
-DBDetect: Diabetic Retinopathy Detection with Binocular Context and Multi-Model Feature Fusion
+# DBDetect: Diabetic Retinopathy Detection with Binocular Context and Multi-Model Feature Fusion
+
+CSCE566 final project, Problem 1: detect diabetic retinopathy (DR) from 2D colour fundus photographs (ODIR-5K, course
+release). Each eye is classified as DR / no DR, and results are reported as overall AUC, sensitivity, specificity, and
+AUC in the female and male groups.
+
+**Method.** We fine-tune a retinal foundation model (RETFound, ViT-L/16) and DenseNet-121 and take their penultimate
+features. We add the features of the **same patient's other eye** and the absolute difference between the two eyes.
+An MLP fusion head is trained on **patient-grouped, cross-fitted (out-of-fold) features**, so it never sees training
+features the backbones have memorized.
+
+**Result.** Test AUC **0.841 ± 0.007** (3 seeds), against **0.793** for the strongest single baseline, DenseNet-121
+(+0.048, 95% CI [+0.033, +0.062], p < 0.001). Sensitivity, specificity, and female and male AUC all improve.
+
+| Method (test set, mean ± SD over seeds 0/1/50) | AUC | Sensitivity | Specificity | Female AUC | Male AUC |
+|---|---|---|---|---|---|
+| ResNet-50 (unified fine-tuning recipe) | 0.775 ± 0.009 | 0.590 | 0.794 | 0.768 | 0.781 |
+| DenseNet-121 (unified recipe) | 0.793 ± 0.020 | 0.669 | 0.776 | 0.790 | 0.796 |
+| ViT-B/16 (unified recipe) | 0.767 ± 0.006 | 0.642 | 0.741 | 0.772 | 0.763 |
+| RETFound, frozen + linear head | 0.768 ± 0.001 | 0.662 | 0.740 | 0.763 | 0.771 |
+| RETFound, fine-tuned (official recipe) | 0.798 ± 0.003 | 0.720 | 0.715 | 0.791 | 0.805 |
+| **Ours: RETFound + DenseNet + other eye, cross-fitted MLP fusion** | **0.841 ± 0.007** | **0.729** | **0.794** | **0.827** | **0.854** |
+
+Main findings (details and all ablations in [`docs/method_and_results.md`](docs/method_and_results.md)):
+- **The other eye** gives every backbone a significant gain, +0.012 to +0.017.
+- **Multi-model fusion** adds about +0.02. With the same number of models, RETFound beats a second DenseNet seed only
+  slightly (+0.008 to +0.012, consistent in sign but mostly not significant).
+- **The training recipe matters a lot.** The CNNs' paper (from-scratch) recipes give 0.70–0.71, while a common
+  fine-tuning recipe gives up to 0.793.
+- **RETFound overfits as soon as its learning rate peaks.** LoRA matches full fine-tuning while training 0.26% of the
+  parameters.
+
+A step-by-step walkthrough with runnable examples is in
+[`notebooks/DBDetect_pipeline.ipynb`](notebooks/DBDetect_pipeline.ipynb). Open directions are in
+[`docs/future_work.md`](docs/future_work.md).
+
+## Repository layout
+
+```
+config/
+  base.yaml                 shared settings (data, epochs, evaluation, paths)
+  recipes/finetune.yaml     unified fine-tuning recipe shared by all baselines
+  unified/                  baselines and RETFound with the unified recipe
+  baselines/                each baseline with its paper's original recipe
+  pfm/                      RETFound: official recipe, linear / MLP probe, LoRA, last-4-blocks, LP-FT
+src/
+  preprocess/dataset.py     npz loading (BGR -> RGB), data loaders, GPU augmentation, cross-fitting hold-out
+  model/train_baseline.py   end-to-end training (deterministic, resumable, --save-features)
+  model/baselines.py        model builder, optimizers (incl. layer-wise lr decay), learning-rate schedules
+  model/pfm.py              RETFound loading, LoRA, trainable-parameter selection
+  model/extract_features.py, train_linear_probe.py   frozen RETFound features + linear / MLP heads
+  model/run_features.py     penultimate features of a trained run
+  model/fusion_head.py      feature-level fusion heads (logistic / MLP, optional other eye)
+  api/evaluate.py           metrics, Youden threshold, patient-level bootstrap CIs
+  api/fuse.py               probability-level fusion (models / other eye / seed ensembles)
+  api/stats.py              paired patient-level bootstrap
+  api/summarize.py          all result tables -> results/
+scripts/
+  dispatch.py               multi-GPU job queue (memory-aware packing, resumable)
+  make_queue.py             queue of every training run behind the results
+  fusion_all.sh             every fusion experiment, then the tables
+splits/train_5fold.csv      patient-grouped, label-stratified folds for cross-fitting
+results/                    summary.md and CSV tables (generated)
+docs/                       method_and_results.md, future_work.md
+notebooks/                  DBDetect_pipeline.ipynb
+environment.yml             conda environment
+```
+
+## Setup
+
+```bash
+conda env create -f environment.yml
+conda activate dbdetect
+```
+
+The environment sets `PYTHONNOUSERSITE=1`, so packages installed under `~/.local` cannot shadow the pinned versions.
+
+**Data** (not included). Put the course release of ODIR-5K at `data/` (a folder or a symlink) with the official split:
+
+```
+data/train/*.npz   data/val/*.npz   data/test/*.npz
+```
+
+Each file is one eye, named `<patient>_<left|right>.npz`, with keys `slo_fundus` (200×200×3 uint8, **BGR**),
+`dr_class` (0/1) and `male` (0/1). `runs/`, `pretrained/`, `features/` and `logs/` are created locally and are not tracked.
+
+**RETFound weights.** The repository [`YukunZhou/RETFound_mae_natureCFP`](https://huggingface.co/YukunZhou/RETFound_mae_natureCFP)
+is gated on Hugging Face. Accept its terms, run `huggingface-cli login` once, and the weights download into `pretrained/` on
+first use. ImageNet weights for the baselines are downloaded by timm in the same way.
+
+## Usage
+
+All commands run from the repository root.
+
+```bash
+# One training run (unified recipe); writes runs/<model>_<augment>_s<seed>/
+python -m src.model.train_baseline --config config/unified/densenet121.yaml --gpu 0 --set train.seed=0
+
+# RETFound fine-tuning with its official recipe and flip augmentation
+python -m src.model.train_baseline --config config/pfm/retfound_mae_ft.yaml --gpu 0 --set train.seed=0 data.augment=flip
+
+# Resume an interrupted run
+python -m src.model.train_baseline --config config/unified/densenet121.yaml --gpu 0 --set train.seed=0 --resume
+
+# Re-score a run's saved predictions
+python -m src.api.evaluate runs/densenet121_ft_full_s0
+```
+
+### Reproducing every result
+
+```bash
+# 1. All end-to-end training runs (105 jobs) through the multi-GPU queue
+python scripts/make_queue.py --out logs/queue_all.yaml
+python scripts/dispatch.py --queue logs/queue_all.yaml --gpus 0 1 2 3
+
+# 2. Frozen RETFound probes: extract features once, then train the heads
+python -m src.model.extract_features --config config/pfm/retfound_mae_lp.yaml --gpu 0
+for s in 0 1 50; do
+  python -m src.model.train_linear_probe --config config/pfm/retfound_mae_lp.yaml --set train.seed=$s
+  python -m src.model.train_linear_probe --config config/pfm/retfound_mae_lp.yaml --run-name retfound_mae_lp_none_lr0.1x_s$s \
+      --set train.seed=$s optim.base_lr=5.0e-4
+  for h in 256 512; do
+    python -m src.model.train_linear_probe --config config/pfm/retfound_mae_mlp.yaml --run-name retfound_mae_mlp_h${h}_s$s \
+        --set train.seed=$s model.hidden=$h
+  done
+done
+
+# 3. Penultimate features of the DenseNet full-train runs (the cross-fitting runs save theirs during training)
+for s in 0 1 50; do python -m src.model.run_features --run runs/densenet121_ft_full_s$s --splits train val test; done
+
+# 4. Every fusion experiment, then all tables and paired tests in results/
+bash scripts/fusion_all.sh
+```
+
+The LP-FT runs (queue group `adapt`) start from the linear-probe heads of step 2, so run step 2 before them, or run
+`make_queue.py --only paper,unified,retfound,crossfit` first. Every run is deterministic: same seed, same numbers.
+
+## Evaluation protocol
+
+- Official folders: train 4,476 / val 641 / test 1,914 images.
+  - **Note: all 641 val images also appear in test.** Every choice (epoch, recipe, fusion weight, regularization,
+    threshold) uses val only; test metrics are reported for every arm.
+- Threshold: Youden's J on val, applied unchanged to test.
+- Seeds 0, 1 and 50; mean ± SD.
+- Comparisons: paired bootstrap over patients (2,000 resamples, both eyes of a patient together).
+
+## Acknowledgements
+
+- RETFound: Zhou et al., *A foundation model for generalizable disease detection from retinal images*, Nature 2023
+  ([code](https://github.com/rmaphoh/RETFound)).
+- ODIR-5K: Peking University, Ocular Disease Intelligent Recognition challenge (2019).
+- Models and ImageNet weights: [timm](https://github.com/huggingface/pytorch-image-models) and torchvision.
+
+## License
+
+MIT, see [`LICENSE`](LICENSE).

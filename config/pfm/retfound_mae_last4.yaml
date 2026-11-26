@@ -1,0 +1,10 @@
+# RETFound partial fine-tuning: only the last 4 of 24 blocks, fc_norm and the head train (cf. the partial fine-tuning
+# analysis of MAE, He et al., 2022). RETFound's own recipe (layer-wise lr decay kept) with flip and 30 epochs.
+recipe: config/pfm/retfound_mae_ft.yaml
+model:
+  name: retfound_mae_last4
+  trainable: 4
+data:
+  augment: flip
+train:
+  epochs: 30

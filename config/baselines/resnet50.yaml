@@ -1,0 +1,21 @@
+# ResNet-50. He et al., "Deep Residual Learning for Image Recognition", CVPR 2016, Sec. 3.4 (ImageNet):
+# SGD, mini-batch 256, momentum 0.9, weight decay 1e-4, lr 0.1 divided by 10 when the error plateaus, no dropout.
+
+model:
+  name: resnet50
+  timm_name: resnet50.tv_in1k   # torchvision ImageNet-1k weights
+  drop_rate: 0.0
+
+optim:
+  name: sgd
+  base_lr: 0.1
+  base_batch_size: 256          # lr = base_lr * train.batch_size / base_batch_size
+  momentum: 0.9
+  nesterov: false
+  weight_decay: 1.0e-4
+  grad_clip: null
+
+sched:
+  name: plateau                 # lr x factor when val AUC stops improving
+  factor: 0.1
+  patience: 3                   # epochs; the paper does not give one

@@ -1,0 +1,6 @@
+# ResNet-50 with the unified fine-tuning recipe. Weights: torchvision IMAGENET1K_V2 (ImageNet-1k top-1 80.9%).
+recipe: config/recipes/finetune.yaml
+model:
+  name: resnet50_ft
+  timm_name: resnet50.tv2_in1k
+  drop_rate: 0.0

@@ -1,0 +1,6 @@
+# DenseNet-121 with the unified fine-tuning recipe. Weights: torchvision IMAGENET1K_V1 (the only torchvision weights).
+recipe: config/recipes/finetune.yaml
+model:
+  name: densenet121_ft
+  timm_name: densenet121.tv_in1k
+  drop_rate: 0.0

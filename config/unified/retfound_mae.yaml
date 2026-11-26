@@ -1,0 +1,13 @@
+# RETFound (MAE, colour fundus, Nature 2023) with the unified fine-tuning recipe: no layer-wise lr decay, no drop path,
+# no label smoothing (the RETFound-specific settings live in config/pfm/retfound_mae_ft.yaml). The head is initialized
+# with trunc_normal(std=0.02), timm's default for ViT heads, as for ViT-B/16.
+recipe: config/recipes/finetune.yaml
+model:
+  name: retfound_mae_ft_u
+  hf_repo: YukunZhou/RETFound_mae_natureCFP
+  hf_file: RETFound_mae_natureCFP.pth
+  timm_arch: vit_large_patch16_224
+  drop_path_rate: 0.0
+  head_init_std: 0.02
+train:
+  save_last_every: 5       # a full training state is 3.6 GB; best epochs are still saved immediately

@@ -1,0 +1,26 @@
+# Shared settings for every baseline. A model file in config/baselines/ overrides any key here,
+# and `--set section.key=value` on the command line overrides both.
+# Relative paths are resolved against the project root; each may be a real folder or a symlink to bigger storage.
+
+data:
+  root: data                  # ODIR_Data with the official train/val/test folders of .npz files
+  image_size: 224             # 200x200 images are resized to the pretrained input size, no crop
+  augment: none               # none | flip | flip_rot: random horizontal flip (and rotation) of train batches,
+                              # seeded by seed and epoch; flip_rot also needs data.rotate_deg (max degrees)
+  num_workers: 4
+
+train:
+  epochs: 100                 # same for every model; the epoch with the best val AUC is kept, no early stopping
+  batch_size: 64              # paper learning rates are scaled linearly from their own batch size to this one
+  seed: 0
+  amp: true                   # bf16 autocast
+  deterministic: true         # deterministic CUDA kernels: same seed gives the same run, and --resume is exact
+
+eval:
+  threshold: youden_val       # youden_val (Youden's J on val, applied to test) | fixed
+  fixed_threshold: 0.5
+  bootstrap: 1000             # patient-level bootstrap resamples for test 95% CIs, 0 = off
+
+paths:
+  runs: runs                  # one subfolder per training run
+  pretrained_cache: pretrained  # Hugging Face cache for the timm ImageNet weights, filled on first use

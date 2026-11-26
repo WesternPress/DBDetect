@@ -1,0 +1,37 @@
+# RETFound (MAE, colour fundus photos), full fine-tuning. Zhou et al., Nature 2023. Recipe released with the paper and
+# these weights (github.com/rmaphoh/RETFound v1.0, commit ad280cb: README fine-tuning command + main_finetune.py defaults):
+#   ViT-L/16, global average pooling + fc_norm, drop path 0.2, AdamW, blr 5e-3 with lr = blr * batch / 256, layer-wise lr
+#   decay 0.65, weight decay 0.05 (not on 1-D tensors, pos_embed, cls_token), 10 warmup epochs then half-cycle cosine to
+#   min_lr 1e-6, label smoothing 0.1 (LabelSmoothingCrossEntropy; no mixup), head init trunc_normal(std=2e-5),
+#   ImageNet mean/std, 224 px input. (Since 2025 the repo uses plain cross-entropy instead of label smoothing.)
+# Shared protocol from config/base.yaml instead of the repo's: no data augmentation (repo: RandAugment, random erasing,
+# random-resized crop), resize 200 -> 224 without the resize-256 + center-crop-224, 100 epochs instead of 50,
+# batch 64 instead of 16 (lr scaled linearly), bf16 autocast instead of fp16 with loss scaling.
+
+model:
+  name: retfound_mae_ft
+  hf_repo: YukunZhou/RETFound_mae_natureCFP
+  hf_file: RETFound_mae_natureCFP.pth
+  timm_arch: vit_large_patch16_224
+  drop_path_rate: 0.2
+  head_init_std: 2.0e-5
+
+optim:
+  name: adamw
+  base_lr: 5.0e-3
+  base_batch_size: 256
+  weight_decay: 0.05
+  layer_decay: 0.65
+  betas: [0.9, 0.999]
+  grad_clip: null
+
+sched:
+  name: warmup_cosine
+  warmup_epochs: 10
+  min_lr: 1.0e-6
+
+loss:
+  label_smoothing: 0.1           # 2-class smoothing 0.1 == BCE against targets 0.05 / 0.95
+
+train:
+  save_last_every: 5             # a full training state is 3.6 GB; best epochs are still saved immediately

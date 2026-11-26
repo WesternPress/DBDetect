@@ -1,3 +1,19 @@
+# Data, outputs and downloaded weights stay local (often symlinks to larger storage).
+# No trailing slash, so the patterns also match symlinks.
+/data
+/runs
+/pretrained
+/logs
+/features
+
+# Course handout material, not part of this code.
+/project_demo_materials
+
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# ---- GitHub Python template (from the initial commit) ----
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

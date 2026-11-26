@@ -1,0 +1,11 @@
+# RETFound LP-FT (Kumar et al., 2022): full fine-tuning that starts the head from the trained linear probe of the same
+# seed (runs/retfound_mae_lp_none_s<seed>, same fc_norm-on-mean-patch feature), so early updates do not distort the
+# pre-trained features through a random head. RETFound's own recipe with flip and 30 epochs.
+recipe: config/pfm/retfound_mae_ft.yaml
+model:
+  name: retfound_mae_lpft
+  init_head_from: runs/retfound_mae_lp_none_s{seed}/best.pt
+data:
+  augment: flip
+train:
+  epochs: 30

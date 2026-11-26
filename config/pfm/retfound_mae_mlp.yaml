@@ -1,0 +1,24 @@
+# Frozen RETFound (MAE) features + MLP head: Linear(1024, hidden) - ReLU - Dropout(0.5) - Linear(hidden, 1) on
+# standardized features (train mean/std). A common MLP-probe recipe: AdamW lr 1e-3, weight decay 1e-3, batch 256,
+# 100 epochs, cosine decay from step 0; hidden size chosen on validation from {256, 512}. Same cached features as
+# retfound_mae_lp.yaml.
+recipe: config/pfm/retfound_mae_lp.yaml
+model:
+  name: retfound_mae_mlp
+  head: mlp
+  hidden: 512
+  dropout: 0.5
+features:
+  standardize: true
+train:
+  batch_size: 256
+optim:
+  name: adamw
+  base_lr: 1.0e-3
+  base_batch_size: 256
+  weight_decay: 1.0e-3
+sched:
+  name: cosine
+  warmup_steps: 0
+loss:
+  label_smoothing: 0.0

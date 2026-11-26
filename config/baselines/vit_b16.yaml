@@ -1,0 +1,24 @@
+# ViT-B/16. Dosovitskiy et al., "An Image is Worth 16x16 Words", ICLR 2021, Sec. 3.2, App. B.1.1, Table 4 (fine-tuning):
+# SGD momentum 0.9, batch 512, no weight decay, gradient clipping at global norm 1, cosine decay, no warmup,
+# pre-trained head replaced by a zero-initialized linear layer.
+# lr: the VTAB setting (one fixed lr for all 19 low-data transfer tasks) is 0.01; for other datasets the paper
+# sweeps {0.001, 0.003, 0.01, 0.03}. The paper fine-tunes at 384 px; we keep 224 like the other baselines.
+
+model:
+  name: vit_b16
+  timm_name: vit_base_patch16_224.augreg2_in21k_ft_in1k  # timm default ViT-B/16, ImageNet-21k pre-trained, 1k fine-tuned
+  drop_rate: 0.0
+  zero_init_head: true
+
+optim:
+  name: sgd
+  base_lr: 0.01
+  base_batch_size: 512
+  momentum: 0.9
+  nesterov: false
+  weight_decay: 0.0
+  grad_clip: 1.0
+
+sched:
+  name: cosine
+  warmup_steps: 0

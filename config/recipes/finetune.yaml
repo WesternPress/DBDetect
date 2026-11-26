@@ -1,0 +1,29 @@
+# Unified fine-tuning recipe shared by every end-to-end model in config/unified/ (ResNet-50, DenseNet-121, ViT-B/16,
+# RETFound). Only the architecture and its pretrained weights differ between models. The original-paper recipes
+# (config/baselines/, config/pfm/) are kept for the supplementary comparison.
+
+data:
+  augment: full            # random resized crop, horizontal flip, rotation, brightness/contrast jitter (train only)
+  crop_scale: [0.85, 1.0]  # area fraction of the crop box
+  crop_ratio: [0.95, 1.05] # aspect ratio of the crop box
+  rotate_deg: 15           # rotation drawn from [-15, 15] degrees
+  jitter: 0.2              # brightness and contrast factors drawn from [0.8, 1.2]
+
+train:
+  epochs: 30               # same budget for every model; the epoch with the best val AUC is kept
+
+optim:
+  name: adamw
+  base_lr: 1.0e-4
+  base_batch_size: 64      # lr 1e-4 at our batch size 64 (no scaling)
+  weight_decay: 1.0e-4     # not applied to 1-D tensors (biases, norm layers)
+  betas: [0.9, 0.999]
+  grad_clip: null
+
+sched:
+  name: warmup_cosine      # linear warmup over the first epoch, then cosine decay to 0, updated every step
+  warmup_epochs: 1
+  min_lr: 0.0
+
+loss:
+  label_smoothing: 0.0     # plain binary cross-entropy

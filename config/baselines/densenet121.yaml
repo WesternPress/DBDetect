@@ -1,0 +1,22 @@
+# DenseNet-121. Huang et al., "Densely Connected Convolutional Networks", CVPR 2017, Sec. 4.2 (ImageNet):
+# 90 epochs, batch 256, lr 0.1 lowered by 10x at epochs 30 and 60, weight decay 1e-4,
+# Nesterov momentum 0.9 without dampening, dropout only on the non-augmented CIFAR/SVHN runs (so none here).
+
+model:
+  name: densenet121
+  timm_name: densenet121.tv_in1k  # torchvision ImageNet-1k weights
+  drop_rate: 0.0
+
+optim:
+  name: sgd
+  base_lr: 0.1
+  base_batch_size: 256
+  momentum: 0.9
+  nesterov: true
+  weight_decay: 1.0e-4
+  grad_clip: null
+
+sched:
+  name: multistep
+  milestones: [0.3333, 0.6667]  # fractions of train.epochs: 30 and 60 of 90 in the paper, 33 and 67 of 100 here
+  factor: 0.1

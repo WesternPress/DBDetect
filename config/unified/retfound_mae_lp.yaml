@@ -1,0 +1,11 @@
+# RETFound (MAE, colour fundus) linear probe with the unified fine-tuning recipe: the encoder is frozen and only the
+# 1-logit head trains, but images get the same augmentation as the other unified models before the frozen encoder.
+recipe: config/recipes/finetune.yaml
+model:
+  name: retfound_mae_lp_u
+  hf_repo: YukunZhou/RETFound_mae_natureCFP
+  hf_file: RETFound_mae_natureCFP.pth
+  timm_arch: vit_large_patch16_224
+  drop_path_rate: 0.0
+  head_init_std: 0.02
+  freeze_backbone: true

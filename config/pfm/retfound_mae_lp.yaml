@@ -1,0 +1,42 @@
+# RETFound (MAE, colour fundus photos), linear probe. Zhou et al., "A foundation model for generalizable disease detection
+# from retinal images", Nature 2023. Optimizer and loss from the recipe released with the paper (github.com/rmaphoh/RETFound
+# v1.0, commit ad280cb: README fine-tuning command + main_finetune.py defaults); head-only training as in the repo's later
+# --adaptation lp mode (which trains with plain cross-entropy, i.e. without the label smoothing used here):
+#   frozen ViT-L/16 encoder; feature = LayerNorm(mean of patch tokens), where the LayerNorm (fc_norm) is newly initialized
+#   and not trained; only the linear head is trained. AdamW, blr 5e-3 with lr = blr * batch / 256, weight decay 0.05 (not on
+#   biases), 10 warmup epochs then half-cycle cosine to min_lr 1e-6, label smoothing 0.1, head init trunc_normal(std=2e-5),
+#   ImageNet mean/std, 224 px input.
+# Shared protocol from config/base.yaml instead of the repo's: no augmentation (the repo uses RandAugment, random erasing,
+# random-resized crop and drop path 0.2 during training), resize 200 -> 224 without the resize-256 + center-crop-224,
+# 100 epochs instead of 50, batch 64. Without augmentation the frozen encoder is deterministic, so features are extracted
+# once (src/model/extract_features.py) and the head is trained on them (src/model/train_linear_probe.py).
+
+model:
+  name: retfound_mae_lp
+  hf_repo: YukunZhou/RETFound_mae_natureCFP
+  hf_file: RETFound_mae_natureCFP.pth
+  timm_arch: vit_large_patch16_224
+  head_init_std: 2.0e-5
+
+features:
+  name: retfound_mae_natureCFP   # features/<name>/{train,val,test}.npz
+  batch_size: 64
+
+optim:
+  name: adamw
+  base_lr: 5.0e-3
+  base_batch_size: 256
+  weight_decay: 0.05
+  betas: [0.9, 0.999]
+  grad_clip: null
+
+sched:
+  name: warmup_cosine
+  warmup_epochs: 10
+  min_lr: 1.0e-6
+
+loss:
+  label_smoothing: 0.1           # 2-class smoothing 0.1 == BCE against targets 0.05 / 0.95
+
+paths:
+  features: features             # symlink to large storage, like data/runs/pretrained

@@ -1,0 +1,9 @@
+# RETFound full fine-tuning, its own recipe (retfound_mae_ft.yaml) with flip augmentation and 30 epochs (the 100-epoch
+# runs peaked at epochs 7-12). Used for the cross-fitting folds and the matching full-training-set runs.
+recipe: config/pfm/retfound_mae_ft.yaml
+model:
+  name: retfound_mae_ft30
+data:
+  augment: flip
+train:
+  epochs: 30

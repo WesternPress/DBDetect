@@ -1,0 +1,15 @@
+# RETFound with LoRA (Hu et al., 2021) on the attention qkv projection of all 24 blocks, rank 8, alpha 16, dropout 0.1.
+# Trains the LoRA matrices, fc_norm and the head; the pre-trained weights stay frozen. Otherwise RETFound's own recipe
+# with flip and 30 epochs, but without layer-wise lr decay (every LoRA matrix is new). lr = base_lr * 64 / 256:
+# base_lr 4e-3 -> 1e-3 (default) or --set optim.base_lr=1.2e-3 -> 3e-4.
+recipe: config/pfm/retfound_mae_ft.yaml
+model:
+  name: retfound_mae_lora
+  lora: {rank: 8, alpha: 16, dropout: 0.1}
+data:
+  augment: flip
+train:
+  epochs: 30
+optim:
+  base_lr: 4.0e-3
+  layer_decay: null
