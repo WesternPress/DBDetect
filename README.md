@@ -22,6 +22,9 @@ features the backbones have memorized.
 | **Ours: RETFound + DenseNet + other eye, cross-fitted MLP fusion** | **0.841 ± 0.007** | **0.729** | **0.794** | **0.827** | **0.854** |
 
 Main findings (details and all ablations in [`docs/method_and_results.md`](docs/method_and_results.md)):
+- **Every part is needed.** Removing the other eye, either backbone or the cross-fitting lowers test AUC by 0.015–0.028
+  (each p ≤ 0.001). Without cross-fitting the head fits memorized training features (train AUC 0.99) and falls below
+  plain probability averaging. The head type matters little (MLP vs logistic regression: +0.002).
 - **The other eye** gives every backbone a significant gain, +0.012 to +0.017.
 - **Multi-model fusion** adds about +0.02. With the same number of models, RETFound beats a second DenseNet seed only
   slightly (+0.008 to +0.012, consistent in sign but mostly not significant).

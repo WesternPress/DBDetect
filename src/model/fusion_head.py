@@ -11,6 +11,8 @@ Each block is standardized with train statistics and scaled by 1/sqrt(dim) so bl
 --eyes adds, per backbone, the other eye's feature block and |own - other|, plus one flag for a missing other eye (then
 the other eye's block repeats the own one). Both eyes of a patient are in the same fold, so the other eye's train
 feature is out-of-fold as well.
+Ablations: --eye-blocks other / diff keeps only one of the two other-eye blocks; --insample trains the head on the
+full-train models' features of their own training images instead of the cross-fitted ones.
 Classifier: L2 logistic regression with C chosen on validation AUC (default), or an MLP head (hidden 256, dropout 0.5,
 AdamW 1e-3, 100 epochs, best epoch on validation AUC). Outputs runs/fusion/<name>_s<s>/ like src/api/fuse.py.
 """
@@ -59,8 +61,9 @@ def other_eye(index):
     return index.str.replace("_left", "_TMP").str.replace("_right", "_left").str.replace("_TMP", "_right")
 
 
-def design(blocks, eyes):
-    """blocks: list of {split: df} (one per backbone). Returns {split: (X, df)} with standardized, scaled blocks."""
+def design(blocks, eyes, eye_blocks=("other", "diff")):
+    """blocks: list of {split: df} (one per backbone). Returns {split: (X, df)} with standardized, scaled blocks.
+    eye_blocks: which other-eye blocks --eyes adds per backbone: the other eye's features and/or |own - other|."""
     ref = blocks[0]
     mats = {s: [] for s in ref}
     for blk in blocks:
@@ -75,7 +78,7 @@ def design(blocks, eyes):
                 j = pos.reindex(other_eye(ref[s].index)).to_numpy()
                 missing = np.isnan(j)
                 j = np.where(missing, np.arange(len(j)), j).astype(int)
-                pieces += [z[s][j], np.abs(z[s] - z[s][j])]
+                pieces += [{"other": z[s][j], "diff": np.abs(z[s] - z[s][j])}[b] for b in eye_blocks]
             mats[s] += [p / np.sqrt(p.shape[1]) for p in pieces]
     out = {}
     for s in ref:
@@ -143,20 +146,22 @@ def main():
     ap.add_argument("--gpu", type=int, default=0)
     ap.add_argument("--insample", action="store_true",
                     help="ablation: train the head on in-sample train features of the full-train models (no cross-fitting)")
+    ap.add_argument("--eye-blocks", choices=["other,diff", "other", "diff"], default="other,diff",
+                    help="ablation: other-eye blocks added with --eyes")
     args = ap.parse_args()
     root = runs_root()
     for s in SEEDS:
         # a backbone may be written name:k to take seed s+k of it (e.g. two seeds of one model as a 2-model control)
         specs = [(b.split(":")[0], SEEDS[(SEEDS.index(s) + int(b.split(":")[1])) % len(SEEDS)] if ":" in b else s)
                  for b in args.backbones]
-        D = design([load_backbone(root, b, sb, args.insample) for b, sb in specs], args.eyes)
+        D = design([load_backbone(root, b, sb, args.insample) for b, sb in specs], args.eyes, tuple(args.eye_blocks.split(",")))
         prob, info = fit_logreg(D) if args.clf == "logreg" else fit_mlp(D, s, torch.device(f"cuda:{args.gpu}"))
         out = os.path.join(root, "fusion", f"{args.name}_s{s}")
         os.makedirs(out, exist_ok=True)
         for split in ("val", "test"):
             df = D[split][1].assign(prob=prob[split]).reset_index()
             df[["id", "label", "prob", "male"]].to_csv(os.path.join(out, f"{split}_preds.csv"), index=False)
-        info.update(insample_train_features=args.insample, backbones=args.backbones, backbone_seeds=[sb for _, sb in specs], eyes=args.eyes, seed=s,
+        info.update(insample_train_features=args.insample, eye_blocks=args.eye_blocks if args.eyes else None, backbones=args.backbones, backbone_seeds=[sb for _, sb in specs], eyes=args.eyes, seed=s,
                     dim=int(D["train"][0].shape[1]))
         with open(os.path.join(out, "fusion.json"), "w") as f:
             json.dump(info, f, indent=2)

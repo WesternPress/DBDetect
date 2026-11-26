@@ -49,6 +49,21 @@ TABLES = {
         ("control: DenseNet + DenseNet + eyes features, logreg", "fusion/dn+dn2_eyes_feat"),
         ("control: DenseNet + DenseNet + eyes features, MLP", "fusion/dn+dn2_eyes_mlp"),
     ],
+    # the final method with one part removed or replaced; heads are MLPs unless stated
+    "ablation": [
+        ("final: RETFound30 + DenseNet + eyes features, MLP", "fusion/rf30+dn_eyes_mlp"),
+        ("without the other eye", "fusion/rf30+dn_mlp"),
+        ("without DenseNet", "fusion/rf30_eyes_mlp"),
+        ("without RETFound", "fusion/dn_eyes_mlp"),
+        ("other-eye block: other eye's features only", "fusion/rf30+dn_eyes-other_mlp"),
+        ("other-eye block: abs(own - other) only", "fusion/rf30+dn_eyes-diff_mlp"),
+        ("no cross-fitting (in-sample train features)", "fusion/rf30+dn_eyes_mlp_insample"),
+        ("no cross-fitting, logreg head", "fusion/rf30+dn_eyes_feat_insample"),
+        ("no cross-fitting, DenseNet + eyes, logreg head", "fusion/dn_eyes_feat_insample"),
+        ("without the other eye, logreg head", "fusion/rf30+dn_feat"),
+        ("without DenseNet, logreg head", "fusion/rf30_eyes_feat"),
+        ("without RETFound, logreg head", "fusion/dn_eyes_feat"),
+    ],
     "adaptation": [
         ("frozen + linear (RETFound recipe)", "retfound_mae_lp_none"),
         ("frozen + linear (unified recipe, aug.)", "retfound_mae_lp_u_full"),
@@ -88,6 +103,16 @@ COMPARISONS = [
     ("fusion/rf30+dn_feat", "fusion/dn+dn2_feat"), ("fusion/rf30+dn_eyes_feat", "fusion/dn+dn2_eyes_feat"),
     ("fusion/rf30+dn_eyes_mlp", "fusion/dn+dn2_eyes_mlp"), ("fusion/rf30+dn_eyes_mlp", "fusion/rf30+dn_eyes_feat"),
     ("fusion/rf30+dn_eyes_mlp", "densenet121_ft_full"), ("fusion/rf30+dn_eyes_mlp", "retfound_mae_ft_flip"),
+    # ablations of the final method: one part removed (same MLP head), other-eye blocks, no cross-fitting
+    ("fusion/rf30+dn_eyes_mlp", "fusion/rf30+dn_mlp"), ("fusion/rf30+dn_eyes_mlp", "fusion/rf30_eyes_mlp"),
+    ("fusion/rf30+dn_eyes_mlp", "fusion/dn_eyes_mlp"), ("fusion/rf30_eyes_mlp", "fusion/dn_eyes_mlp"),
+    ("fusion/rf30+dn_eyes_mlp", "fusion/rf30+dn_eyes-other_mlp"), ("fusion/rf30+dn_eyes_mlp", "fusion/rf30+dn_eyes-diff_mlp"),
+    ("fusion/rf30+dn_eyes_mlp", "fusion/rf30+dn_eyes_mlp_insample"), ("fusion/rf30+dn_eyes_feat", "fusion/rf30+dn_eyes_feat_insample"),
+    ("fusion/dn_eyes_feat", "fusion/dn_eyes_feat_insample"), ("fusion/rf30+dn_eyes_mlp", "fusion/rf30+dn+eyes"),
+    ("fusion/rf30+dn_eyes_mlp_insample", "fusion/rf30+dn+eyes"),
+    # MLP vs logistic head without one part
+    ("fusion/rf30+dn_mlp", "fusion/rf30+dn_feat"), ("fusion/rf30_eyes_mlp", "fusion/rf30_eyes_feat"),
+    ("fusion/dn_eyes_mlp", "fusion/dn_eyes_feat"),
 ]
 
 

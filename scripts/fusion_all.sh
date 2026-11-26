@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Every fusion experiment in results/summary.md. No training of backbones: needs the finished runs from
-# scripts/make_queue.py (groups unified, retfound, crossfit). CPU only, except the two MLP heads (GPU 0).
+# scripts/make_queue.py (groups unified, retfound, crossfit). CPU only, except the MLP heads (GPU 0).
 # Run from the repository root: bash scripts/fusion_all.sh
 set -euo pipefail
 export PYTHONNOUSERSITE=1
@@ -35,6 +35,18 @@ python -m src.api.fuse eyes --a fusion/dn+dn2 --name dn+dn2+eyes
 python -m src.model.fusion_head --name dn+dn2_feat --backbones densenet121_ft_full densenet121_ft_full:1
 python -m src.model.fusion_head --name dn+dn2_eyes_feat --backbones densenet121_ft_full densenet121_ft_full:1 --eyes
 python -m src.model.fusion_head --name dn+dn2_eyes_mlp --backbones densenet121_ft_full densenet121_ft_full:1 --eyes --clf mlp --gpu 0
+
+# Ablations of the final method with the same MLP head: leave one part out, then keep only one other-eye block
+python -m src.model.fusion_head --name rf30+dn_mlp --backbones retfound_mae_ft30 densenet121_ft_full --clf mlp --gpu 0
+python -m src.model.fusion_head --name rf30_eyes_mlp --backbones retfound_mae_ft30 --eyes --clf mlp --gpu 0
+python -m src.model.fusion_head --name dn_eyes_mlp --backbones densenet121_ft_full --eyes --clf mlp --gpu 0
+python -m src.model.fusion_head --name rf30+dn_eyes-other_mlp --backbones retfound_mae_ft30 densenet121_ft_full --eyes --eye-blocks other --clf mlp --gpu 0
+python -m src.model.fusion_head --name rf30+dn_eyes-diff_mlp --backbones retfound_mae_ft30 densenet121_ft_full --eyes --eye-blocks diff --clf mlp --gpu 0
+
+# No cross-fitting: the head trains on the full-train models' features of their own training images
+python -m src.model.fusion_head --name rf30+dn_eyes_mlp_insample --backbones retfound_mae_ft30 densenet121_ft_full --eyes --clf mlp --gpu 0 --insample
+python -m src.model.fusion_head --name rf30+dn_eyes_feat_insample --backbones retfound_mae_ft30 densenet121_ft_full --eyes --insample
+python -m src.model.fusion_head --name dn_eyes_feat_insample --backbones densenet121_ft_full --eyes --insample
 
 # Tables and paired tests
 python -m src.api.summarize

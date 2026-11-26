@@ -42,6 +42,23 @@ Test set: official test folder (1,914 images). Seeds 0/1/50 (mean ± SD) unless 
 | control: DenseNet + DenseNet + eyes features, logreg | `fusion/dn+dn2_eyes_feat` | 3 | 0.837 | 0.829 ± 0.006 | 0.722 | 0.783 | 0.822 | 0.836 | -0.013 |
 | control: DenseNet + DenseNet + eyes features, MLP | `fusion/dn+dn2_eyes_mlp` | 3 | 0.840 | 0.830 ± 0.008 | 0.716 | 0.794 | 0.817 | 0.844 | -0.027 |
 
+## ablation
+
+| arm | run | n | val AUC | test AUC | Sens | Spec | AUC female | AUC male | F - M |
+|---|---|---|---|---|---|---|---|---|---|
+| final: RETFound30 + DenseNet + eyes features, MLP | `fusion/rf30+dn_eyes_mlp` | 3 | 0.844 | 0.841 ± 0.007 | 0.729 | 0.794 | 0.827 | 0.854 | -0.027 |
+| without the other eye | `fusion/rf30+dn_mlp` | 3 | 0.829 | 0.822 ± 0.006 | 0.695 | 0.781 | 0.813 | 0.830 | -0.017 |
+| without DenseNet | `fusion/rf30_eyes_mlp` | 3 | 0.816 | 0.813 ± 0.005 | 0.710 | 0.761 | 0.797 | 0.827 | -0.030 |
+| without RETFound | `fusion/dn_eyes_mlp` | 3 | 0.824 | 0.813 ± 0.003 | 0.706 | 0.783 | 0.801 | 0.824 | -0.023 |
+| other-eye block: other eye's features only | `fusion/rf30+dn_eyes-other_mlp` | 3 | 0.840 | 0.840 ± 0.006 | 0.764 | 0.764 | 0.829 | 0.849 | -0.020 |
+| other-eye block: abs(own - other) only | `fusion/rf30+dn_eyes-diff_mlp` | 3 | 0.840 | 0.838 ± 0.006 | 0.730 | 0.789 | 0.824 | 0.852 | -0.027 |
+| no cross-fitting (in-sample train features) | `fusion/rf30+dn_eyes_mlp_insample` | 3 | 0.835 | 0.825 ± 0.010 | 0.731 | 0.777 | 0.808 | 0.842 | -0.035 |
+| no cross-fitting, logreg head | `fusion/rf30+dn_eyes_feat_insample` | 3 | 0.838 | 0.831 ± 0.005 | 0.684 | 0.821 | 0.822 | 0.840 | -0.018 |
+| no cross-fitting, DenseNet + eyes, logreg head | `fusion/dn_eyes_feat_insample` | 3 | 0.824 | 0.821 ± 0.011 | 0.693 | 0.791 | 0.817 | 0.825 | -0.008 |
+| without the other eye, logreg head | `fusion/rf30+dn_feat` | 3 | 0.827 | 0.824 ± 0.005 | 0.731 | 0.754 | 0.815 | 0.831 | -0.016 |
+| without DenseNet, logreg head | `fusion/rf30_eyes_feat` | 3 | 0.811 | 0.815 ± 0.003 | 0.736 | 0.743 | 0.801 | 0.827 | -0.027 |
+| without RETFound, logreg head | `fusion/dn_eyes_feat` | 3 | 0.823 | 0.818 ± 0.006 | 0.673 | 0.813 | 0.814 | 0.823 | -0.009 |
+
 ## adaptation
 
 | arm | run | n | val AUC | test AUC | Sens | Spec | AUC female | AUC male | F - M |
@@ -107,3 +124,17 @@ Test set: official test folder (1,914 images). Seeds 0/1/50 (mean ± SD) unless 
 | `fusion/rf30+dn_eyes_mlp` | `fusion/rf30+dn_eyes_feat` | +0.0024 | [-0.0011, +0.0062] | 0.1930 |
 | `fusion/rf30+dn_eyes_mlp` | `densenet121_ft_full` | +0.0476 | [+0.0329, +0.0624] | 0.0005 |
 | `fusion/rf30+dn_eyes_mlp` | `retfound_mae_ft_flip` | +0.0424 | [+0.0301, +0.0548] | 0.0005 |
+| `fusion/rf30+dn_eyes_mlp` | `fusion/rf30+dn_mlp` | +0.0190 | [+0.0110, +0.0274] | 0.0005 |
+| `fusion/rf30+dn_eyes_mlp` | `fusion/rf30_eyes_mlp` | +0.0277 | [+0.0178, +0.0383] | 0.0005 |
+| `fusion/rf30+dn_eyes_mlp` | `fusion/dn_eyes_mlp` | +0.0276 | [+0.0165, +0.0390] | 0.0005 |
+| `fusion/rf30_eyes_mlp` | `fusion/dn_eyes_mlp` | -0.0001 | [-0.0186, +0.0175] | 0.9920 |
+| `fusion/rf30+dn_eyes_mlp` | `fusion/rf30+dn_eyes-other_mlp` | +0.0012 | [-0.0024, +0.0048] | 0.5120 |
+| `fusion/rf30+dn_eyes_mlp` | `fusion/rf30+dn_eyes-diff_mlp` | +0.0023 | [-0.0020, +0.0061] | 0.2950 |
+| `fusion/rf30+dn_eyes_mlp` | `fusion/rf30+dn_eyes_mlp_insample` | +0.0152 | [+0.0061, +0.0249] | 0.0010 |
+| `fusion/rf30+dn_eyes_feat` | `fusion/rf30+dn_eyes_feat_insample` | +0.0069 | [-0.0011, +0.0152] | 0.1040 |
+| `fusion/dn_eyes_feat` | `fusion/dn_eyes_feat_insample` | -0.0026 | [-0.0090, +0.0041] | 0.4190 |
+| `fusion/rf30+dn_eyes_mlp` | `fusion/rf30+dn+eyes` | +0.0052 | [-0.0017, +0.0123] | 0.1350 |
+| `fusion/rf30+dn_eyes_mlp_insample` | `fusion/rf30+dn+eyes` | -0.0100 | [-0.0206, -0.0005] | 0.0420 |
+| `fusion/rf30+dn_mlp` | `fusion/rf30+dn_feat` | -0.0018 | [-0.0043, +0.0005] | 0.1230 |
+| `fusion/rf30_eyes_mlp` | `fusion/rf30_eyes_feat` | -0.0019 | [-0.0055, +0.0018] | 0.3070 |
+| `fusion/dn_eyes_mlp` | `fusion/dn_eyes_feat` | -0.0049 | [-0.0109, +0.0011] | 0.1210 |
