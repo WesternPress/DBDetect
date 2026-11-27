@@ -1,4 +1,6 @@
-# DBDetect: Diabetic Retinopathy Detection with Binocular Context and Multi-Model Feature Fusion
+# MIKU: Multi-model Inter-eye Knowledge Unification for Diabetic Retinopathy Detection
+
+This repository (**DBDetect**) contains the code of **MIKU**, the method described in the CSCE566 final report.
 
 CSCE566 final project, Problem 1: detect diabetic retinopathy (DR) from 2D colour fundus photographs (ODIR-5K, course
 release). Each eye is classified as DR / no DR, and results are reported as overall AUC, sensitivity, specificity, and
@@ -9,8 +11,9 @@ features. We add the features of the **same patient's other eye** and the absolu
 An MLP fusion head is trained on **patient-grouped, cross-fitted (out-of-fold) features**, so it never sees training
 features the backbones have memorized.
 
-**Result.** Test AUC **0.841 ± 0.007** (3 seeds), against **0.793** for the strongest single baseline, DenseNet-121
+**Result.** MIKU reaches a test AUC of **0.841 ± 0.007** (3 seeds), against **0.793** for the strongest single baseline, DenseNet-121
 (+0.048, 95% CI [+0.033, +0.062], p < 0.001). Sensitivity, specificity, and female and male AUC all improve.
+The head-free MIKU-lite reaches 0.836 without any fold models and is the recommended practical variant.
 
 | Method (test set, mean ± SD over seeds 0/1/50) | AUC | Sensitivity | Specificity | Female AUC | Male AUC |
 |---|---|---|---|---|---|
@@ -19,7 +22,8 @@ features the backbones have memorized.
 | ViT-B/16 (unified recipe) | 0.767 ± 0.006 | 0.642 | 0.741 | 0.772 | 0.763 |
 | RETFound, frozen + linear head | 0.768 ± 0.001 | 0.662 | 0.740 | 0.763 | 0.771 |
 | RETFound, fine-tuned (official recipe) | 0.798 ± 0.003 | 0.720 | 0.715 | 0.791 | 0.805 |
-| **Ours: RETFound + DenseNet + other eye, cross-fitted MLP fusion** | **0.841 ± 0.007** | **0.729** | **0.794** | **0.827** | **0.854** |
+| MIKU-lite: probability-level fusion + other eye (no head, no cross-fitting) | 0.836 ± 0.010 | 0.759 | 0.759 | 0.826 | 0.845 |
+| **MIKU (full): RETFound + DenseNet + other eye, cross-fitted MLP fusion** | **0.841 ± 0.007** | **0.729** | **0.794** | **0.827** | **0.854** |
 
 Main findings (details and all ablations in [`docs/method_and_results.md`](docs/method_and_results.md)):
 - **Every part is needed.** Removing the other eye, either backbone or the cross-fitting lowers test AUC by 0.015–0.028

@@ -1,4 +1,4 @@
-# DBDetect: Diabetic Retinopathy Detection with Binocular Context and Multi-Model Feature Fusion
+# MIKU: Multi-model Inter-eye Knowledge Unification for Diabetic Retinopathy Detection
 
 > CSCE566 final project, Problem 1. This document records the complete work as of 2026-11-26: task, data, evaluation
 > protocol, baselines, our method, results and ablations. Every number comes from `results/summary.md`
@@ -103,7 +103,7 @@ tokens followed by `fc_norm`, as in the official `global_pool=True` path.
 
 Fine-tuning RETFound with the unified recipe instead is significantly worse (Section 6.8).
 
-## 4. Our method
+## 4. Our method (MIKU)
 
 ### 4.1 Idea
 
@@ -187,15 +187,15 @@ implementation.
 | RETFound frozen + linear head | 0.770 | 0.768 ± 0.001 | 0.662 | 0.740 | 0.763 | 0.771 |
 | RETFound frozen + MLP head | 0.793 | 0.780 ± 0.004 | 0.683 | 0.723 | 0.774 | 0.786 |
 | RETFound fine-tuned (official recipe + flip) | 0.805 | 0.798 ± 0.003 | 0.720 | 0.715 | 0.791 | 0.805 |
-| Lightweight: probability fusion + other eye | 0.842 | 0.836 ± 0.010 | 0.759 | 0.759 | 0.826 | 0.845 |
-| **Ours: feature fusion + other eye + MLP** | **0.844** | **0.841 ± 0.007** | **0.729** | **0.794** | **0.827** | **0.854** |
+| MIKU-lite: probability fusion + other eye | 0.842 | 0.836 ± 0.010 | 0.759 | 0.759 | 0.826 | 0.845 |
+| **MIKU: feature fusion + other eye + MLP** | **0.844** | **0.841 ± 0.007** | **0.729** | **0.794** | **0.827** | **0.854** |
 
 **Main paired tests** (test AUC difference, patient-level bootstrap with 2,000 resamples):
 
 | Comparison | Difference | 95% CI | p |
 |---|---|---|---|
-| Ours − DenseNet-121 | **+0.048** | [+0.033, +0.062] | < 0.001 |
-| Ours − RETFound fine-tuned | +0.042 | [+0.030, +0.055] | < 0.001 |
+| MIKU − DenseNet-121 | **+0.048** | [+0.033, +0.062] | < 0.001 |
+| MIKU − RETFound fine-tuned | +0.042 | [+0.030, +0.055] | < 0.001 |
 | RETFound fine-tuned − DenseNet-121 | +0.005 | [−0.015, +0.025] | 0.61 |
 | RETFound fine-tuned − ViT-B/16 | +0.032 | [+0.013, +0.049] | < 0.001 |
 
@@ -203,7 +203,7 @@ implementation.
 probabilities. Test has 1,007 patients with 31.7% prevalence.
 - DenseNet: 0.792
 - RETFound: 0.804
-- Ours: 0.824
+- MIKU: 0.824
 
 The fusion is designed for per-eye prediction, so aggregating to patient level gives less than the per-eye 0.841.
 
